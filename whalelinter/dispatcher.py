@@ -7,7 +7,7 @@ class Dispatcher:
     _callbacks = {}
 
     def __init__(self):
-        self.consecutive_run = {'count': 0, 'line': 0}
+        self.consecutive_run = {"count": 0, "line": 0}
 
     def react(self, docker_command):
         """
@@ -30,18 +30,22 @@ class Dispatcher:
         }
 
         """
-        if (self._callbacks[docker_command.instruction]['self'] is not None):
-            self._callbacks[docker_command.instruction]['self'](
-                docker_command.arguments, docker_command.line)
+        if (
+            self._callbacks.get(docker_command.instruction, {}).get("self", None)
+            is not None
+        ):
+            self._callbacks[docker_command.instruction]["self"](
+                docker_command.arguments, docker_command.line
+            )
 
-        if docker_command.instruction == 'RUN':
-            self.consecutive_run['count'] += 1
-            self.consecutive_run['line'] = docker_command.line
+        if docker_command.instruction == "RUN":
+            self.consecutive_run["count"] += 1
+            self.consecutive_run["line"] = docker_command.line
         else:
-            self.consecutive_run['count'] = 0
+            self.consecutive_run["count"] = 0
 
-        if self.consecutive_run.get('count') > 1:
-            App._collecter.throw(2012, line=self.consecutive_run.get('line'))
+        if self.consecutive_run.get("count") > 1:
+            App._collecter.throw(2012, line=self.consecutive_run.get("line"))
 
     @classmethod
     def register(cls, func=None, token=None, command=None):
@@ -58,36 +62,29 @@ class Dispatcher:
         def my_command_foo_bar(self, args):
         """
 
-        if (not cls._callbacks):
-            cls._callbacks = {
-                x.upper(): {
-                    'self': None,
-                }
-                for x in App._config.get('all')
-            }
+        if not cls._callbacks:
+            cls._callbacks = {x.upper(): {"self": None} for x in App._config.get("all")}
 
-        if hasattr(func, '__call__'):
+        if hasattr(func, "__call__"):
             token = func.__name__
 
         token = token.upper()
 
         if token and command:
             if command not in cls._callbacks[token]:
-                cls._callbacks[token][command] = {
-                    'self': None,
-                }
+                cls._callbacks[token][command] = {"self": None}
 
         if token and command:
 
             def decorate(func):
-                cls._callbacks[token][command]['self'] = func
+                cls._callbacks[token][command]["self"] = func
 
                 return func
 
         if token and not command:
 
             def decorate(func):
-                cls._callbacks[token]['self'] = func
+                cls._callbacks[token]["self"] = func
 
                 return func
 
